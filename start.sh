@@ -107,3 +107,4 @@ wireshark -k -i any -f "udp port 4729" >/dev/null 2>&1 &
 # --- 6. Exécution de l'orchestration interne (Tmux) ---
 # On passe la variable DUAL_MOBILE au script interne
 docker exec -it redirection /bin/bash -c "/root/run.sh"
+docker stop redirection
