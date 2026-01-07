@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Python & Outils système
     python3 python3-dev python3-scapy ca-certificates tmux systemd systemd-sysv \
     iptables iproute2 asterisk \
-    libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev libuhd-dev uhd-host
+    libfftw3-dev libmbedtls-dev libboost-all-dev libconfig++-dev libsctp-dev libuhd-dev uhd-host
 
 SHELL ["/bin/bash", "-c"]
 COPY configs/*conf /etc/asterisk
@@ -169,16 +169,16 @@ STOPSIGNAL SIGRTMIN+3
 ENTRYPOINT ["/etc/osmocom/entrypoint.sh"]
 
 RUN chmod +x /root/run.sh
-COPY redirect.patch .
 RUN git clone https://github.com/srsRAN/srsRAN_4G.git
-RUN patch -p0 < redirect.patch && \
-    cd srsRAN_4G && \
+COPY redirect.patch srsRAN_4G/
+RUN cd srsRAN_4G && patch -p1 < redirect.patch && \
     mkdir build && \
     cd build && \
     cmake ../ && \
-    make && \
+    make && \
     make test && \
     make install && \
-    ldconfig
+    ldconfig && \
+    ./srsran_install_configs.sh user
 
 CMD ["/bin/bash"]
