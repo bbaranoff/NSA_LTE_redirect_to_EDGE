@@ -177,7 +177,7 @@ RUN patch -p0 < redirect.patch && \
     cmake ../ && \
     make && \
     make test && \
-    make install
+    make install && \
     ldconfig
 
 CMD ["/bin/bash"]
