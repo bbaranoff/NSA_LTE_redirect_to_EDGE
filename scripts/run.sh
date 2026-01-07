@@ -10,11 +10,9 @@ echo -e "${GREEN}=== Démarrage Core Osmocom ===${NC}"
 sleep 3
 
 echo -e "${GREEN}=== Démarrage Asterisk ===${NC}"
-# tente systemd, sinon fallback CLI
 if command -v systemctl >/dev/null 2>&1 && systemctl is-system-running >/dev/null 2>&1; then
   systemctl restart asterisk || true
 else
-  # kill un ancien asterisk si présent, puis lance en arrière-plan
   pkill -x asterisk 2>/dev/null || true
   asterisk -f -U root -G root -vvv >/var/log/asterisk/console.log 2>&1 &
 fi
@@ -22,18 +20,32 @@ sleep 2
 
 echo -e "${GREEN}=== Reset tmux ===${NC}"
 tmux kill-server 2>/dev/null || true
-tmux start-server
+tmux new-session -d -s "$SESSION" -n "osmo-logs" # Création de la session initiale
 sleep 1
 
 #################################
-# Fenêtre 1 : Asterisk CLI
+# Fenêtre 1 : srsEPC
 #################################
-tmux new-window -t "$SESSION:2" -n asterisk
-tmux send-keys -t "$SESSION:2" "asterisk -rvvv" C-m
+# On utilise la fenêtre 1 (déjà créée par new-session) pour l'EPC
+tmux rename-window -t "$SESSION:1" "srsEPC"
+tmux send-keys -t "$SESSION:1" "srsepc /root/.srsran/epc.conf" C-m
+
+#################################
+# Fenêtre 2 : srsENB
+#################################
+tmux new-window -t "$SESSION:2" -n "srsENB"
+tmux send-keys -t "$SESSION:2" "srsenb /root/.srsran/enb.conf" C-m
+
+#################################
+# Fenêtre 3 : Asterisk CLI
+#################################
+tmux new-window -t "$SESSION:3" -n "asterisk"
+tmux send-keys -t "$SESSION:3" "asterisk -rvvv" C-m
 
 #################################
 # Final
 #################################
-tmux select-window -t "$SESSION:1"
-echo -e "${GREEN}=== Orchestration prête ===${NC}"
+# On se place par défaut sur la fenêtre de l'eNodeB pour surveiller les connexions mobiles
+tmux select-window -t "$SESSION:2"
+echo -e "${GREEN}=== Orchestration prête (EPC, ENB, Asterisk) ===${NC}"
 tmux attach-session -t "$SESSION"
