@@ -29,7 +29,7 @@ read -p "Enter MVNO MNC (e.g., 26 for NRJ Mobile): " MVNO_MNC
 echo -e "\n\033[0;32m[*] Injecting configurations via sed...\033[0m"
 
 # 1. Remplacement de l'IP globale [cite: 14, 17, 18]
-find ./configs ./scripts -type f -exec sed -i "s/192.168.1.69/$USER_IP/g" {} +
+find ./configs ./scripts -type f -exec sed -i "s/192.168.1.101/$USER_IP/g" {} +
 
 # 2. Application de l'identité MVNO sur Osmocom (EDGE) 
 # On configure le BSC et le MSC avec le code du MVNO
