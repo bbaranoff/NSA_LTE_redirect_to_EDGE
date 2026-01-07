@@ -159,7 +159,7 @@ WantedBy=multi-user.target
 EOF
 
 # Activation du service et nettoyage
-RUN systemctl enable osmo-bts.service && \
+RUN systemctl enable osmo-bts.service
 RUN systemctl enable osmo-trx.service && \
     passwd -d root && \
     systemctl mask getty@tty1.service serial-getty@tty1.service
