@@ -6,24 +6,19 @@ This repository provides a complete **software-defined-radio** environment to de
 
 The solution is containerized using a Ubuntu 22.04 base to ensure all dependencies are met without polluting the host system.
 
-* 
-**2G Stack**: Full Osmocom suite including `osmo-msc`, `osmo-bsc`, `osmo-hlr`, `osmo-ggsn`, and `osmo-sgsn`.
+* **2G Stack**: Full Osmocom suite including `osmo-msc`, `osmo-bsc`, `osmo-hlr`, `osmo-ggsn`, and `osmo-sgsn`.
 
 
-* 
-**4G Stack**: Integrated `srsRAN_4G` suite providing eNodeB and EPC capabilities.
+* **4G Stack**: Integrated `srsRAN_4G` suite providing eNodeB and EPC capabilities.
 
 
-* 
-**Voice/SIP**: Asterisk integration for call routing via `osmo-sip-connector`.
+* **Voice/SIP**: Asterisk integration for call routing via `osmo-sip-connector`.
 
 
-* 
-**Radio Interface**: Support for `osmo-trx-uhd` to interface with hardware and `osmo-bts-virtual` for testing.
+* **Radio Interface**: Support for `osmo-trx-uhd` to interface with hardware and `osmo-bts-virtual` for testing.
 
 
-* 
-**Orchestration**: Automated service management via Systemd and Tmux sessions inside the container.
+* **Orchestration**: Automated service management via Systemd and Tmux sessions inside the container.
 
 
 
@@ -50,12 +45,10 @@ The `start.sh` script automates host-side network configuration and launches the
 
 ### 3. Development Workflow
 
-1. 
-**Modify**: Update files in `configs/` or `scripts/` locally.
+1. **Modify**: Update files in `configs/` or `scripts/` locally.
 
 
-2. 
-**Inject & Run**: The `start.sh` script uses `sed` to inject variables before the Docker build/copy process.
+2. **Inject & Run**: The `start.sh` script uses `sed` to inject variables before the Docker build/copy process.
 
 
 3. **Debug**: Attach to the Tmux session to monitor real-time logs:
@@ -80,23 +73,17 @@ The project uses a patched version of `srsRAN_4G`. It relies on specific RRC (Ra
 
 ## 📂 Key Components
 
-| Component | Description | Source |
-| --- | --- | --- |
-| `Dockerfile` | Multi-stage build for Osmocom and srsRAN. 
+| Component | Description |
+| --- | --- |
+| `Dockerfile` | Multi-stage build for Osmocom and srsRAN. |
+| `start.sh` | Host setup (TUN/TAP, IP routing) and user prompts. | 
+| `run.sh` | Container orchestrator starting services in Tmux. |
+| `configs/` | Template configuration files for all network nodes. | 
 
- |  |
-| `start.sh` | Host setup (TUN/TAP, IP routing) and user prompts. | User Script |
-| `run.sh` | Container orchestrator starting services in Tmux. 
-
- |  |
-| `configs/` | Template configuration files for all network nodes. 
-
- |  |
 
 ## ⚠️ Requirements & Safety
 
-* 
-**Privileged Mode**: Docker must run with `--privileged` and `--net host` to access SDR hardware and manage network interfaces.
+* **Privileged Mode**: Docker must run with `--privileged` and `--net host` to access SDR hardware and manage network interfaces.
 
 
 * **Legal**: This PoC is for educational purposes only. Always use a Faraday cage when transmitting on cellular frequencies.
