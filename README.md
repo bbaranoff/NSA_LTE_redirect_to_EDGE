@@ -1,57 +1,59 @@
 # NSA LTE Redirect to EDGE PoC
 
-This repository provides a complete **software-defined-radio** environment to demonstrate network redirection from LTE (4G) to EDGE (2G) using **Osmocom** and **srsRAN_4G**.
+This repository provides a complete **software-defined-radio** environment to demonstrate network redirection from LTE (4G) to EDGE (2G) using **Osmocom** and a patched version of **srsRAN_4G**.
 
 ## 🏗 Project Architecture
 
-The solution is containerized using a Ubuntu 22.04 base to ensure all dependencies are met without polluting the host system.
+The solution is containerized to manage the complex dependencies of the Osmocom and srsRAN stacks.
 
-* **2G Stack**: Full Osmocom suite including `osmo-msc`, `osmo-bsc`, `osmo-hlr`, `osmo-ggsn`, and `osmo-sgsn`.
-
-
-* **4G Stack**: Integrated `srsRAN_4G` suite providing eNodeB and EPC capabilities.
+* **2G Stack (MVNO Identity)**: Full Osmocom suite (MSC, BSC, HLR, GGSN, SGSN).
 
 
-* **Voice/SIP**: Asterisk integration for call routing via `osmo-sip-connector`.
+* **4G Stack (MNO Identity)**: srsEPC and srsENB serving as the LTE anchor.
 
 
-* **Radio Interface**: Support for `osmo-trx-uhd` to interface with hardware and `osmo-bts-virtual` for testing.
+* **Voice/SIP**: Asterisk integration for mobile-to-SIP routing.
 
 
-* **Orchestration**: Automated service management via Systemd and Tmux sessions inside the container.
-
-
+* **Orchestration**: Automated via Tmux sessions inside the container for real-time monitoring.
 
 ## 🛠 Workflow & Usage
 
 ### 1. Build Phase
 
-The build process compiles the entire Osmocom stack and srsRAN from source to ensure version compatibility.
+Compile the Osmocom stack and srsRAN from source to ensure specific version compatibility.
 
 ```bash
-# Manual build using the provided Dockerfile
-docker build -t redirection_poc .
+chmod +x build.sh
+./build.sh
 
 ```
 
 ### 2. Deployment Phase (`start.sh`)
 
-The `start.sh` script automates host-side network configuration and launches the container with necessary privileges.
+The `start.sh` script automates host configuration and uses a dual-prompt system to handle network identities.
+
 **It dynamically configures:**
 
-* **IP Address**: Maps services to your local network via global `sed` replacement.
-* **MCC / MNC**: Sets Mobile Country/Network codes in `osmo-bsc.cfg`, `osmo-msc.cfg`, and srsRAN `.conf` files.
-* **TAC**: Sets the Tracking Area Code for the LTE cell in `epc.conf`.
+* **Host IP**: Maps services to your local network via global `sed` replacement.
+* **MNO (LTE Anchor)**: Injects the MNO MCC/MNC into `enb.conf` and `epc.conf` so the UE attaches to your LTE cell.
+* **MVNO (Redirection Target)**: Injects the MVNO MCC/MNC into `osmo-bsc.cfg` and `osmo-msc.cfg` for the EDGE cell.
+* **TAC**: Sets the Tracking Area Code for the LTE cell.
+
+```bash
+sudo ./start.sh
+
+```
 
 ### 3. Development Workflow
 
-1. **Modify**: Update files in `configs/` or `scripts/` locally.
+1. **Modify**: Edit files in `configs/` or `scripts/` locally.
 
 
-2. **Inject & Run**: The `start.sh` script uses `sed` to inject variables before the Docker build/copy process.
+2. **Inject**: The `start.sh` script applies your MCC/MNC/IP variables to local files before the Docker build/copy process.
 
 
-3. **Debug**: Attach to the Tmux session to monitor real-time logs:
+3. **Monitor**: Attach to the Tmux session to see real-time interaction between the eNodeB and the BTS:
 
 ```bash
 docker exec -it egprs tmux attach-session -t osmocom
@@ -62,28 +64,25 @@ docker exec -it egprs tmux attach-session -t osmocom
 
 ### MNO vs. MVNO
 
-The effectiveness of this PoC depends heavily on the target network's core configuration:
+The effectiveness of the redirection depends on the target network's core policy:
 
-* **MVNOs (Mobile Virtual Network Operators)**: Generally more susceptible to remaining on the redirected EDGE/GSM layer.
-* **MNOs (Mobile Network Operators)**: Most Tier-1 operators use aggressive **Fast Return to LTE** or **LTE Steering** policies. On MNOs, the UE may only stay on 2G for a very short duration before the network or SIM card forces a fallback to 4G/NSA.
+* **MVNOs (Mobile Virtual Network Operators)**: Generally more stable for testing as they are more likely to remain on the redirected EDGE layer.
+* **MNOs (Mobile Network Operators)**: Most Tier-1 operators use aggressive **Fast Return to LTE** or **LTE Steering**. On MNOs, the UE may only stay on 2G for a very short duration before the network or SIM card forces a fallback to 4G/NSA.
 
 ### Redirection Mechanism
 
-The project uses a patched version of `srsRAN_4G`. It relies on specific RRC (Radio Resource Control) release messages to force the UE to scan the GSM frequencies defined in the `osmo-bsc` configuration.
+The project uses a patched version of `srsRAN_4G`. It triggers specific RRC (Radio Resource Control) release messages with redirection info, forcing the UE to scan the GSM frequencies defined in the `osmo-bsc` configuration.
 
 ## 📂 Key Components
 
 | Component | Description |
 | --- | --- |
 | `Dockerfile` | Multi-stage build for Osmocom and srsRAN. |
-| `start.sh` | Host setup (TUN/TAP, IP routing) and user prompts. | 
-| `run.sh` | Container orchestrator starting services in Tmux. |
-| `configs/` | Template configuration files for all network nodes. | 
-
+| `start.sh` | Host setup (TUN/TAP, IP routing) and Dual-ID prompts. |
+| `run.sh` | Internal orchestrator starting services in Tmux. |
+| `configs/` | Template configuration files for all network nodes. |
 
 ## ⚠️ Requirements & Safety
 
-* **Privileged Mode**: Docker must run with `--privileged` and `--net host` to access SDR hardware and manage network interfaces.
-
-
+* **Privileged Mode**: Docker must run with `--privileged` to access SDR hardware and manage network interfaces.
 * **Legal**: This PoC is for educational purposes only. Always use a Faraday cage when transmitting on cellular frequencies.
