@@ -67,6 +67,7 @@ RUN for repo in \
     autoreconf -fi && \
     EXTRA_FLAGS="" && \
     if [ "$name" = "libosmo-abis" ]; then EXTRA_FLAGS="--disable-dahdi"; fi && \
+    if [ "$name" = "osmo-trx" ]; then EXTRA_FLAGS="--with-uhd"; fi && \
     if [ "$name" = "osmo-bts" ]; then EXTRA_FLAGS="--enable-virtual --enable-trx"; fi && \
     if [ "$name" = "osmo-ggsn" ]; then EXTRA_FLAGS="--enable-gtp-linux"; fi && \
     \
