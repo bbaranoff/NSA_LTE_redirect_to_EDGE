@@ -5,6 +5,33 @@ SESSION="osmocom"
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+# ---- Config injection (from host via docker -e) ----
+: "${USER_IP:=192.168.1.101}"
+: "${ARFCN:=3350}"
+: "${MNO_MCC:=208}"
+: "${MNO_MNC:=01}"
+: "${USER_TAC:=7}"
+: "${MVNO_MCC:=208}"
+: "${MVNO_MNC:=26}"
+
+echo -e "${GREEN}=== Injection configs (Osmocom + srsRAN) ===${NC}"
+
+# 1) IP replacement everywhere in container configs
+# Use '|' delimiter to avoid escaping dots in IPs.
+find /etc/osmocom /root/.config/srsran -type f -print0 2>/dev/null | \
+  xargs -0 -r sed -i "s|192.168.1.101|${USER_IP}|g" || true
+
+# 2) MVNO identity (EDGE) in Osmocom configs
+sed -i -E "s/(mobile country code) [0-9]+/\\1 ${MVNO_MCC}/g" /etc/osmocom/osmo-bsc.cfg /etc/osmocom/osmo-msc.cfg 2>/dev/null || true
+sed -i -E "s/(mobile network code) [0-9]+/\\1 ${MVNO_MNC}/g" /etc/osmocom/osmo-bsc.cfg /etc/osmocom/osmo-msc.cfg 2>/dev/null || true
+
+# 3) MNO identity + LTE params in srsRAN configs
+sed -i -E "s/(mcc\\s*=\\s*)[0-9]+/\\1${MNO_MCC}/g" /root/.config/srsran/epc.conf /root/.config/srsran/enb.conf 2>/dev/null || true
+sed -i -E "s/(mnc\\s*=\\s*)[0-9]+/\\1${MNO_MNC}/g" /root/.config/srsran/epc.conf /root/.config/srsran/enb.conf 2>/dev/null || true
+sed -i -E "s/(tac\\s*=\\s*)[0-9]+/\\1${USER_TAC}/g" /root/.config/srsran/epc.conf /root/.config/srsran/rr.conf 2>/dev/null || true
+sed -i -E "s/(dl_earfcn\\s*=\\s*)[0-9]+/\\1${ARFCN}/g" /root/.config/srsran/enb.conf 2>/dev/null || true
+
+
 echo -e "${GREEN}=== Démarrage Core Osmocom ===${NC}"
 /etc/osmocom/osmo-start.sh
 sleep 3

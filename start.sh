@@ -15,9 +15,9 @@ DEFAULT_IP=$(hostname -I | awk '{print $1}')
 read -p "Enter Local Host IP (Default: $DEFAULT_IP): " USER_IP
 USER_IP=${USER_IP:-$DEFAULT_IP}
 
-DEFAULT_ARFCN=3350
-read -p "Enter ARFCN (Default: 3350): " USER_ARFCN
-ARFCN=${DEFAULT_ARFCN:-$USER_ARFCN}
+DEFAULT_ARFCN="3350"
+read -p "Enter ARFCN (Default: ${DEFAULT_ARFCN}): " USER_ARFCN
+ARFCN="${USER_ARFCN:-$DEFAULT_ARFCN}"
 
 
 echo -e "\n\033[0;33m--- MNO Configuration (for srsRAN / LTE) ---\033[0m"
@@ -47,21 +47,6 @@ MVNO_MCC="${MVNO_MCC:-$DEFAULT_MVNO_MCC}"
 read -p "Enter MVNO MNC (e.g., 26 for NRJ Mobile) [${DEFAULT_MVNO_MNC}]: " MVNO_MNC
 MVNO_MNC="${MVNO_MNC:-$DEFAULT_MVNO_MNC}"
 
-echo -e "\n\033[0;32m[*] Injecting configurations via sed...\033[0m"
-
-# 1. Remplacement de l'IP globale
-find ./configs ./scripts -type f -exec sed -i "s/192.168.1.101/$USER_IP/g" {} +
-
-# 2. Application de l'identité MVNO sur Osmocom (EDGE)
-sed -i "s/mobile country code [0-9]*/mobile country code $MVNO_MCC/g" configs/osmo-bsc.cfg configs/osmo-msc.cfg 2>/dev/null || true
-sed -i "s/mobile network code [0-9]*/mobile network code $MVNO_MNC/g" configs/osmo-bsc.cfg configs/osmo-msc.cfg 2>/dev/null || true
-
-# 3. Application de l'identité MNO sur srsRAN (LTE)
-sed -i "s/dl_earfcn = 3350/dl_earfcn = $ARFCN/g" configs/srsran/enb.conf 2>/dev/null || true
-sed -i "s/mcc = [0-9]*/mcc = $MNO_MCC/g" configs/srsran/epc.conf configs/srsran/enb.conf 2>/dev/null || true
-sed -i "s/mnc = [0-9]*/mnc = $MNO_MNC/g" configs/srsran/epc.conf configs/srsran/enb.conf 2>/dev/null || true
-sed -i "s/tac = [0-9]*/tac = $USER_TAC/g" configs/srsran/epc.conf configs/srsran/rr.conf 2>/dev/null || true
-
 
 # --- 3. Build & Run ---
 echo -e "\033[0;32m[*] Starting Build and Container...\033[0m"
@@ -79,7 +64,7 @@ modprobe tun
 mkdir -p /dev/net
 if [ ! -c /dev/net/tun ]; then
     mknod /dev/net/tun c 10 200
-c    chmod 666 /dev/net/tun
+    chmod 666 /dev/net/tun
 fi
 ip l del apn0
 echo nameserver 192.168.1.254 > /etc/resolv.conf
@@ -103,6 +88,13 @@ docker run -d \
     --device /dev/net/tun:/dev/net/tun \
     -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
     --tmpfs /run --tmpfs /run/lock --tmpfs /tmp \
+    -e USER_IP="$USER_IP" \
+    -e ARFCN="$ARFCN" \
+    -e MNO_MCC="$MNO_MCC" \
+    -e MNO_MNC="$MNO_MNC" \
+    -e USER_TAC="$USER_TAC" \
+    -e MVNO_MCC="$MVNO_MCC" \
+    -e MVNO_MNC="$MVNO_MNC" \
     redirection_poc
 
 echo -e "${GREEN}[*] Attente du démarrage des services systemd (SS7/SIGTRAN)...${NC}"
