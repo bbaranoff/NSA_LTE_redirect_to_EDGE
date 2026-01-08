@@ -73,6 +73,8 @@ docker exec -it egprs tmux attach-session -t osmocom
 
 ### MNO vs. MVNO
 
+Seems working on (any?) MNVO and (any?) phones put the MNO MCC/MNC in the eNodeB and the MNVO MCC/MNC in the BTS, the tac should be +/-1 than the genuine one. The EARFCN should be the same than the genuine eNodeB.
+
 Once the UE is redirected and attaches to the 2G MVNO cell, it remains on the EDGE network because it does not recognize any available 4G cells sharing the specific MVNO identifiers. The device stops searching for LTE layers since the broadcasted PLMN on the 2G side does not match the MNO's 4G neighbor list. By isolating the MVNO identity on the 2G stack, you effectively prevent the handset from triggering a fast-return to the 4G anchor.
 
 The effectiveness of the redirection depends on the target network's core policy:
