@@ -15,32 +15,53 @@ DEFAULT_IP=$(hostname -I | awk '{print $1}')
 read -p "Enter Local Host IP (Default: $DEFAULT_IP): " USER_IP
 USER_IP=${USER_IP:-$DEFAULT_IP}
 
-# Configuration du MNO (LTE Anchor)
+DEFAULT_ARFCN=3350
+read -p "Enter ARFCN (Default: 3350): " USER_ARFCN
+ARFCN=${DEFAULT_ARFCN:-$USER_ARFCN}
+
+
 echo -e "\n\033[0;33m--- MNO Configuration (for srsRAN / LTE) ---\033[0m"
-read -p "Enter MNO MCC (e.g., 208 for France): " MNO_MCC
-read -p "Enter MNO MNC (e.g., 01 for Orange): " MNO_MNC
-read -p "Enter LTE TAC (e.g., 7): " USER_TAC
+
+DEFAULT_MNO_MCC="208"
+DEFAULT_MNO_MNC="01"
+DEFAULT_TAC="7"
+
+read -p "Enter MNO MCC (e.g., 208 for France) [${DEFAULT_MNO_MCC}]: " MNO_MCC
+MNO_MCC="${MNO_MCC:-$DEFAULT_MNO_MCC}"
+
+read -p "Enter MNO MNC (e.g., 01 for Orange) [${DEFAULT_MNO_MNC}]: " MNO_MNC
+MNO_MNC="${MNO_MNC:-$DEFAULT_MNO_MNC}"
+
+read -p "Enter LTE TAC (e.g., 7) [${DEFAULT_TAC}]: " USER_TAC
+USER_TAC="${USER_TAC:-$DEFAULT_TAC}"
 
 # Configuration du MVNO (Target EDGE)
 echo -e "\n\033[0;33m--- MVNO Configuration (for Osmocom / EDGE) ---\033[0m"
-read -p "Enter MVNO MCC (e.g., 208): " MVNO_MCC
-read -p "Enter MVNO MNC (e.g., 26 for NRJ Mobile): " MVNO_MNC
+
+DEFAULT_MVNO_MCC="208"
+DEFAULT_MVNO_MNC="26"
+
+read -p "Enter MVNO MCC (e.g., 208) [${DEFAULT_MVNO_MCC}]: " MVNO_MCC
+MVNO_MCC="${MVNO_MCC:-$DEFAULT_MVNO_MCC}"
+
+read -p "Enter MVNO MNC (e.g., 26 for NRJ Mobile) [${DEFAULT_MVNO_MNC}]: " MVNO_MNC
+MVNO_MNC="${MVNO_MNC:-$DEFAULT_MVNO_MNC}"
 
 echo -e "\n\033[0;32m[*] Injecting configurations via sed...\033[0m"
 
-# 1. Remplacement de l'IP globale [cite: 14, 17, 18]
+# 1. Remplacement de l'IP globale
 find ./configs ./scripts -type f -exec sed -i "s/192.168.1.101/$USER_IP/g" {} +
 
-# 2. Application de l'identité MVNO sur Osmocom (EDGE) 
-# On configure le BSC et le MSC avec le code du MVNO
-sed -i "s/mcc [0-9]*/mcc $MVNO_MCC/g" configs/osmo-bsc.cfg configs/osmo-msc.cfg 2>/dev/null || true
-sed -i "s/mnc [0-9]*/mnc $MVNO_MNC/g" configs/osmo-bsc.cfg configs/osmo-msc.cfg 2>/dev/null || true
+# 2. Application de l'identité MVNO sur Osmocom (EDGE)
+sed -i "s/mobile country code [0-9]*/mobile country code $MVNO_MCC/g" configs/osmo-bsc.cfg configs/osmo-msc.cfg 2>/dev/null || true
+sed -i "s/mobile network code [0-9]*/mobile network code $MVNO_MNC/g" configs/osmo-bsc.cfg configs/osmo-msc.cfg 2>/dev/null || true
 
-# 3. Application de l'identité MNO sur srsRAN (LTE) 
-# On configure l'EPC et l'eNodeB avec le code du MNO pour que le téléphone s'y attache
+# 3. Application de l'identité MNO sur srsRAN (LTE)
+sed -i "s/dl_earfcn = 3350/dl_earfcn = $ARFCN/g" configs/srsran/enb.conf 2>/dev/null || true
 sed -i "s/mcc = [0-9]*/mcc = $MNO_MCC/g" configs/srsran/epc.conf configs/srsran/enb.conf 2>/dev/null || true
 sed -i "s/mnc = [0-9]*/mnc = $MNO_MNC/g" configs/srsran/epc.conf configs/srsran/enb.conf 2>/dev/null || true
 sed -i "s/tac = [0-9]*/tac = $USER_TAC/g" configs/srsran/epc.conf configs/srsran/rr.conf 2>/dev/null || true
+
 
 # --- 3. Build & Run ---
 echo -e "\033[0;32m[*] Starting Build and Container...\033[0m"

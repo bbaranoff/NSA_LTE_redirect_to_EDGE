@@ -3,6 +3,7 @@ FROM redirection_build:latest
 
 COPY scripts/. /etc/osmocom/
 COPY configs/*cfg /etc/osmocom/
+COPY configs/srsran/*conf /root/.config/srsran/
 COPY configs/*conf /etc/asterisk/
 RUN mv /etc/osmocom/run.sh /root/
 RUN chmod +x /root/run.sh
