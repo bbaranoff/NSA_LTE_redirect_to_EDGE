@@ -12,7 +12,7 @@ The solution is containerized to manage the complex dependencies of the Osmocom 
 * **4G Stack (MNO Identity)**: srsEPC and srsENB serving as the LTE anchor.
 
 
-* **Voice/SIP**: Asterisk integration for mobile-to-SIP routing.
+* **Voice/SIP**: Asterisk integration for mobile-to-SIP routing. You have to reconfigure pjsip.conf in configs/ to add a provider for non local calls.
 
 
 * **Orchestration**: Automated via Tmux sessions inside the container for real-time monitoring.
