@@ -24,7 +24,7 @@ echo -e "\n\033[0;33m--- MNO Configuration (for srsRAN / LTE) ---\033[0m"
 
 DEFAULT_MNO_MCC="208"
 DEFAULT_MNO_MNC="01"
-DEFAULT_TAC="7"
+DEFAULT_TAC="0X007"
 
 read -p "Enter MNO MCC (e.g., 208 for France) [${DEFAULT_MNO_MCC}]: " MNO_MCC
 MNO_MCC="${MNO_MCC:-$DEFAULT_MNO_MCC}"
@@ -32,7 +32,7 @@ MNO_MCC="${MNO_MCC:-$DEFAULT_MNO_MCC}"
 read -p "Enter MNO MNC (e.g., 01 for Orange) [${DEFAULT_MNO_MNC}]: " MNO_MNC
 MNO_MNC="${MNO_MNC:-$DEFAULT_MNO_MNC}"
 
-read -p "Enter LTE TAC (e.g., 7) [${DEFAULT_TAC}]: " USER_TAC
+read -p "Enter LTE TAC (hex format e.g.,0x0007) [${DEFAULT_TAC}]: " USER_TAC
 USER_TAC="${USER_TAC:-$DEFAULT_TAC}"
 
 # Configuration du MVNO (Target EDGE)
