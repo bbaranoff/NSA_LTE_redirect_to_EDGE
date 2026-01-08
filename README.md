@@ -29,6 +29,15 @@ chmod +x build.sh
 
 ```
 
+OR
+
+Grab the docker build 
+
+```bash
+sudo docker pull ghcr.io/bbaranoff/nsa_lte_redirect_to_edge:main
+sudo docker tag ghcr.io/bbaranoff/nsa_lte_redirect_to_edge:main redirection_build
+``
+
 ### 2. Deployment Phase (`start.sh`)
 
 The `start.sh` script automates host configuration and uses a dual-prompt system to handle network identities.
